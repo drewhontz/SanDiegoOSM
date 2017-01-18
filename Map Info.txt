@@ -1,0 +1,3 @@
+Here is the link I downloaded my OSM XML from: https://mapzen.com/data/metro-extracts/metro/san-diego_california/
+
+I chose to work with the San Diego map as I hope I will be able to move back to Southern California for my next career opportunity.

@@ -1,0 +1,7 @@
+Citations
+
+- https://www.cheatography.com/davechild/cheat-sheets/regular-expressions/
+  - I used this site to help form the regex patterns to clean fast food names
+  
+- http://matplotlib.org/examples/pylab_examples/bar_stacked.html
+  - I used this matplotlib example to create the stacked way/node bar plot
