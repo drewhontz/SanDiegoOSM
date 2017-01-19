@@ -55,6 +55,19 @@ pp.pprint(col.find_one())
 # In[7]:
 
 def draw_bar(ind, data, label, x_label, y_label):
+    """
+    Description: Convenience function for drawing a quick bar plot using matplot lib
+    
+    Args:
+        ind (list of int): A range explaining the placement of the bars in the bar plot
+        data (list of int): Data to be used in the bar plot (must be same length as ind/ number of desired bars)
+        label (list of str):  Names to be used as labels for each bar
+        x_label (str): Label for the x-axis
+        y_label (str): Label for the y-axis
+    
+    Returns:
+        No return value, should show the plot
+    """
     plt.barh(ind, data, tick_label=label, color='c')
     plt.xlabel(x_label)
     plt.ylabel(y_label)
@@ -90,6 +103,16 @@ print "Number of entries:\t{}\nNumber of nodes:\t{}\nNumber of ways:\t{}".    fo
 # In[208]:
 
 def get_unique_count(collection, user_column):
+    """
+    Description: Convenience function for getting unique field values
+    
+    Args:
+        collection (str): A string representing the name of the collection in MongoDb you wish to use
+        user_column (str): The column you wish to gather the unique values from
+
+    Returns:
+        The length of the results from the distinct query; i.e. the number of unique values in a column
+    """
     return len(collection.distinct(user_column))
 
 
@@ -107,6 +130,17 @@ print "{} distinct users!".format(get_unique_count(col, "created.user"))
 # In[210]:
 
 def get_field_counts(collection, field_name, limit=None):
+    """
+    Description: Convenience function for querying for the unique values and frequencies in a collection
+    
+    Args:
+        collection (str): A string representing the name of the collection in MongoDb you wish to use
+        field_name (str): The column you wish to gather the unique values from
+        limit (int)(optional): An optional parameter for limiting the number of results
+
+    Returns:
+        The query results with columns _id, count where _id is the unique value and count is the number of occurances that value has in the collection
+    """
     if limit:
         query = [{"$match": {"{}".format(field_name): {"$exists" : True}}},                      {"$group": {"_id": "${}".format(field_name), "count":{"$sum": 1}}},                      {"$sort": {"count": -1}},                      {"$limit": limit}]
     else:
@@ -132,6 +166,17 @@ print "\n{} of the entries came from the top ten contibutors".format(proportion_
 # In[212]:
 
 def draw_pie(data, color_list, labels):
+    """
+    Description: Convenience function for drawing a quick pie plot using matplot lib
+    
+    Args:
+        data (list of int): Data to be used in the bar plot (must be same length as ind/ number of desired bars)
+        color_list (list of str): A list of colors to be used for each slice
+        label (list of str):  Names to be used as labels for each slice
+    
+    Returns:
+        No return value, should show the plot
+    """
     plt.pie(data, colors=color_list, labels=labels, shadow=True, autopct='%1.2f%%')
     plt.show()
 
@@ -165,6 +210,20 @@ draw_pie(data, colors, labels)
 # In[215]:
 
 def draw_stacked_bar(ind, bar1_data, bar2_data, x_y_labels, legend_tuple, labels):
+    """
+    Description: Convenience function for drawing a quick stacked bar plot using matplot lib
+    
+    Args:
+        ind (list of int): List of positions for the bars in the plot
+        bar1_data (list of int): List of int for first plot
+        bar2_data (list of int): list of int for the second plot
+        x_y_labels (tuple of str): tuple containing the names of the x,y axis
+        legend_tuple (tuple of str): tuple that explains which plot is which in the legend
+        labels (list of str): list of strings for each bar name
+    
+    Returns:
+        No return value, should show the plot
+    """
     p1 = plt.barh(ind, bar1_data, color='y', tick_label=labels)
     p2 = plt.barh(ind, bar2_data, left=bar1_data, color='r', tick_label=labels)
                                                          
@@ -215,6 +274,16 @@ draw_stacked_bar(ind,                 [node['count'] for node in node_contributi
 # In[152]:
 
 def get_fast_food(collection, limit=None):
+    """
+    Description: Convenience function for querying for the most frequently occuring fast food chains
+    
+    Args:
+        collection (str): A string representing the name of the collection in MongoDb you wish to use
+        limit (int)(optional): An optional parameter for limiting the number of results
+
+    Returns:
+        The query results with columns _id, count where _id is the unique value and count is the number of occurances that value has in the collection
+    """
     if not limit:
         query = [{"$match": {"amenity": 'fast_food', "name":{"$exists": True}}},                {"$group": {"_id": "$name", "count": {"$sum": 1}}},                {"$sort": {"count":-1}}]
     else:
@@ -242,6 +311,16 @@ draw_bar(ind, data, label, x_label, y_label)
 # In[219]:
 
 def get_fast_food_cuisine_counts(collection, limit=None):
+    """
+    Description: Convenience function for querying for the most frequently occuring fast food cuisine types
+    
+    Args:
+        collection (str): A string representing the name of the collection in MongoDb you wish to use
+        limit (int)(optional): An optional parameter for limiting the number of results
+
+    Returns:
+        The query results with columns _id, count where _id is the unique value and count is the number of occurances that value has in the collection
+    """
     if limit:
         query = [                {"$match": {"amenity": "fast_food", "cuisine": {"$exists": True}}},                {"$unwind": "$cuisine"},                {"$group": {"_id": "$cuisine", "count": {"$sum": 1}}},                {"$sort": {"count": -1}},                {"$limit": limit}]
     else:
@@ -268,6 +347,16 @@ draw_pie(data=data,color_list=['c','b', 'y', 'm', 'g'], labels=label)
 # In[9]:
 
 def fast_food_by_type(collection, cuisine_type):
+    """
+    Description: Convenience function for querying for the most frequently occuring fast food chains by cuisine type
+    
+    Args:
+        collection (str): A string representing the name of the collection in MongoDb you wish to use
+        limit (int)(optional): An optional parameter for limiting the number of results
+
+    Returns:
+        The query results with columns _id, count where _id is the unique value and count is the number of occurances that value has in the collection
+    """
     query = [{"$match" : {        "name": {"$exists": True},        "cuisine": {"$exists": True}, "cuisine": "{}".format(cuisine_type),        "amenity": {"$exists": True}, "amenity": "fast_food"}},    {"$group": {"_id": "$name", "count": {"$sum": 1}}},    {"$sort": {"count": -1}}]
     return collection.aggregate(query)
 

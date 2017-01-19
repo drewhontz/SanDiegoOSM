@@ -75,9 +75,19 @@ print "Original file size:\t{}\nSample file size:\t{}".format(original_size.st_s
 # 
 # Now that we have our sample, we should get a sense of what data is available to us. To do this, we will use a SAX parsing method (iterparse) to create a dictionary with tags and their counts to help determine which fields will be critical during our shaping phase.
 
-# In[4]:
+# In[1]:
 
 def get_tag_frequencies(file_name):
+    """
+    Description:
+        Function used to return the unique/distinct tags from a .osm file by iteratively parsing said file and examining each node and way element's child tags.
+    
+    Args:
+        file_name (str): The name of the file to be parsed
+        
+    Returns:
+        tag_freq (dict): A dictionary containing the tags and frequencies at which they occur in the file. 
+    """
     tag_freq = defaultdict(int)
 
     for ev, el, in ET.iterparse(file_name):
@@ -209,9 +219,42 @@ for ev, el in ET.iterparse('sample.osm'):
 # 
 # Now that we have the keys we are interested in, I thought it wise to shape our data first before cleaning, as I find it easier to have consistent field names (i.e. our zip code data will be in address.postcode rather than zip_1, zip_2, and addr:zip_1) when cleaning similar fields of data.
 
-# In[78]:
+# In[2]:
 
 def shape_data(map_file):
+    """
+    Description:
+        Function used to shape an .osm file into the data model used for this project (example model shown below)
+        
+    {
+        "id": "2406124091",
+        "type: "node",
+        "visible":"true",
+        "created": {
+                  "version":"2",
+                  "changeset":"17206049",
+                  "timestamp":"2013-08-03T16:43:42Z",
+                  "user":"linuxUser16",
+                  "uid":"1219059"
+                },
+        "pos": [41.9757030, -87.6921867],
+        "address": {
+                  "housenumber": "5157",
+                  "postcode": "60625",
+                  "street": "North Lincoln Ave"
+                },
+        "amenity": "restaurant",
+        "cuisine": "mexican",
+        "name": "La Cabana De Don Luis",
+        "phone": "1 (773)-271-5176"
+    }
+    
+    Args:
+        map_file (str): The name of the file to be parsed
+        
+    Returns:
+        master (list): A list of dictionaries containing the node/way elements from the parsed file. Each node/way child tag key value is shaped into a python dict key value.
+    """
     master = []
     for ev, el in ET.iterparse(map_file):  
         if el.tag == 'node' or el.tag == 'way':
@@ -297,9 +340,19 @@ for pc in postcode:
 #  - If an entry contains a '-' character, split the value at '-' and retain the first 5 digits
 #  - If an entry contains a ':' (denoting a range) fill in the range of postal codes between the two numbers and store the postal code as a list of those values
 
-# In[12]:
+# In[3]:
 
 def clean_postcode(map_dict):
+    """
+    Description:
+        Function used to clean postcode data from our 'shaped' San Diego map file
+
+    Args:
+        map_dict (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        No return value, outputs data to be cleaned and it's new cleaned value
+    """
     for entry in map_dict:
         if 'address' in entry.keys():
             if 'postcode' in entry['address'].keys():
@@ -331,9 +384,19 @@ for number in housenumber:
 # - Convert all '.5' addresses to the valid 1/2 format
 # - Entries with ';' characters express buildings with a range of addresses within. Fill in the values in this range and store as a list
 
-# In[13]:
+# In[4]:
 
 def clean_housenumber(map_dict):
+    """
+    Description:
+        Function used to clean housenumber data from our 'shaped' San Diego map file
+
+    Args:
+        map_dict (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        No return value, outputs data to be cleaned and it's new cleaned value
+    """    
     for entry in map_dict:
         if 'address' in entry.keys():
             if 'housenumber' in entry['address'].keys():
@@ -355,9 +418,19 @@ def clean_housenumber(map_dict):
 
 # ### 5.4 Street Name
 
-# In[14]:
+# In[5]:
 
 def get_road_types(road_names):
+    """
+    Description:
+        Grabs the last word in a street name and add it to a set
+
+    Args:
+        road_names (set): A set of street names
+
+    Returns:
+        road_type (set): a set of the last word in each of our street names.
+    """
     road_type = set()
     for name in road_names:
         n = name.split()
@@ -365,6 +438,16 @@ def get_road_types(road_names):
     return road_type
 
 def get_road_prefix(road_names):
+    """
+    Description:
+        Grabs the first word in a street name and add it to a set
+
+    Args:
+        road_names (set): A set of street names
+
+    Returns:
+        road_type (set): a set of the first word in each of our street names.
+    """
     pre = set()
     for name in road_names:
         pre.add(name.split()[0])
@@ -394,9 +477,19 @@ for pre in road_prefix:
 #  - In our prefix, we will need to clean out values smaller than 3 characters long with a '.'.
 #  - In our suffix, we will need to clean out values matching 'Av, Ave, Ct, Pl, Dr, Ln, St'
 
-# In[174]:
+# In[6]:
 
 def clean_street(data):
+    """
+    Description:
+        Function used to clean street data from our 'shaped' San Diego map file
+
+    Args:
+        data (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        No return value, outputs data to be cleaned and it's new cleaned value
+    """    
     error = {
         'Ave' : "Avenue",
         'St' : "Street",
@@ -434,9 +527,19 @@ for num in phone:
 #  - If the phone number has a leading 1, remove it
 #  - insert a '-' character after the 3rd and 6th digit for the xxx-xxx-xxxx format
 
-# In[366]:
+# In[7]:
 
 def clean_phone(map_dict):
+    """
+    Description:
+        Function used to clean phone number data from our 'shaped' San Diego map file
+
+    Args:
+        map_dict (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        No return value, outputs data to be cleaned and it's new cleaned value
+    """    
     for entry in map_dict:
         if 'phone_number' in entry.keys():
             entry['phone_number'] = re.sub('[^0-9]','', entry['phone_number'])
@@ -480,12 +583,22 @@ for c in sorted(cuisine):
 # - pluralize 'burger'and 'pretzel'
 # - any variation on donut (doughnut, doughnuts) should be donuts
 
-# In[398]:
+# In[8]:
 
 import unicodedata
 
 # convenience function for cleaning cuisine types that will be broken out into a list
 def clean_list_values(val):
+    """
+    Description:
+        Function used to clean cuisine names from list data within our 'shaped' San Diego map file
+
+    Args:
+        val: Typically an instance of str or unicode extracted from a split function being called on the 'cuisine' key's value.
+
+    Returns:
+        val: an instance of str or unicode without '_' or " " characters
+    """    
     if "_" in val:
         val = val.strip("_")
     if " " in val:
@@ -493,6 +606,16 @@ def clean_list_values(val):
     return val
 
 def clean_cuisine(map_dict):
+    """
+    Description:
+        Function used to clean housenumber data from our 'shaped' San Diego map file
+
+    Args:
+        map_dict (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        No return value, outputs data to be cleaned and it's new cleaned value
+    """    
     for entry in map_dict:
         if 'cuisine' in entry.keys():
             if isinstance(entry['cuisine'], list):
@@ -544,9 +667,19 @@ def clean_cuisine(map_dict):
 # 
 # Lets take a look at what our fast food names look like
 
-# In[104]:
+# In[9]:
 
 def get_set_of_ff_names(data):
+    """
+    Description:
+        Function used to get unique fast food name data from our 'shaped' San Diego map file
+
+    Args:
+        data (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        ff_names (set): A set of the unique fast food names in our data
+    """
     ff_names = set()
 
     for row in data:
@@ -564,9 +697,19 @@ pp.pprint(ff_names)
 
 # It looks like we are going to have a lot of similar values to be cleaned (see Jack in the Box and In-N-Out) I will want to have a means of identifying what needs to be cleaned programatically when we apply this to the full data set. To do so, I will simply filter out those who have the first 4 characters in common. This isn't perfect and I can already see it impacting places that start with 'The ' but it is a quick way to reduce the set that needs to be cleaned to a size that I can manually scrub.
 
-# In[107]:
+# In[11]:
 
 def create_list_of_names_to_clean(set_data):
+    """
+    Description:
+        Function used to get narrow down which fast food names will need cleaning.
+
+    Args:
+        set_data (list): A list of the fast food names, misspellings and all.
+
+    Returns:
+        name_clean (list): An (incomplete) list of fast food names to clean
+    """
     name_clean = []
     data = sorted(list(set_data))
     for x in range(1, len(data)):
@@ -587,9 +730,19 @@ pp.pprint(to_clean)
 # 
 # **Edit** When I applied this to the full data set, my filter method generated a much larger list. I worked my way through this list, identified a regular expression that would target these issues, compiled it into the dictionary you see below and formed the cleaning function.
 
-# In[15]:
+# In[12]:
 
 def clean_fast_food_entries(data):
+    """
+    Description:
+        Function used to change misspellings of franchise names into the name listed on their websites.
+
+    Args:
+        data (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        None
+    """
     regex_dict = {
     "^Arby": "Arby's",
     "^Bombay" : "Bombay Coast Indian Tandoor & Curry Express",
@@ -629,9 +782,19 @@ def clean_fast_food_entries(data):
 
 # I wanted to get a measure of the religious presence is in San Diego mostly to compare the number of churches to my current home in Seattle, WA. Below are the audit and cleaning functions. 
 
-# In[117]:
+# In[14]:
 
 def get_places_of_worship(data):
+    """
+    Description:
+        Function used to retrieve the unique places of worship in our data.
+
+    Args:
+        data (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        worship_set (set): set of unique types of places of worship
+    """    
     worship_set = set()
     for entry in data:
         if 'amenity' in entry.keys():
@@ -648,9 +811,19 @@ get_places_of_worship(sample)
 
 # Our sample only returns 3 distinct religions in San Diego and I found that hard to believe so I tested it on our master set later on. The data was in good shape so the only change I made was to lump the values 'unitarian_universal' in the unitarian bucket
 
-# In[121]:
+# In[15]:
 
 def clean_religion(data):
+    """
+    Description:
+        Function used to clean the types of places of worship in our data
+
+    Args:
+        data (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        None, changes unitarian_ entries to unitarian
+    """    
     for entry in data:
         if 'amenity' in entry.keys():
             if entry['amenity'] == 'place_of_worship':
@@ -663,9 +836,19 @@ def clean_religion(data):
 # 
 # Here is a convenience function for cleaning our data at once
 
-# In[361]:
+# In[16]:
 
 def clean_all(data):
+    """
+    Description:
+        Master function chaining together our other cleaning functions for convenience of cleaning all desired fields in one call
+        
+    Args:
+        data (list): A list of dictionaries representing the node/way elements from our map data
+
+    Returns:
+        None
+    """       
     print "1/6 Cleaning postcode data"
     clean_postcode(data)
 
@@ -707,9 +890,20 @@ master =  shape_data('san-diego_california.osm')
 clean_all(master)
 
 
-# In[402]:
+# In[17]:
 
 def write_to_json(data, filename):
+    """
+    Description:
+        Function used to write out dictionary data to json file
+
+    Args:
+        data (list): A list of dictionaries representing the node/way elements from our map data
+        filename (str): The desired outfile
+
+    Returns:
+        None, a outfile is created
+    """   
     with open(filename, 'w') as fp:
         json.dump(data, fp)
 
